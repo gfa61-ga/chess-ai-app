@@ -1,0 +1,10 @@
+{
+  "files": {
+    "main.js": "/chess-ai-app/static/js/main.5e9ed7ae.js",
+    "index.html": "/chess-ai-app/index.html",
+    "main.5e9ed7ae.js.map": "/chess-ai-app/static/js/main.5e9ed7ae.js.map"
+  },
+  "entrypoints": [
+    "static/js/main.5e9ed7ae.js"
+  ]
+}
