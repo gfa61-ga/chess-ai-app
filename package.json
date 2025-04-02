@@ -1,28 +1,20 @@
 {
-  "name": "chess-play-with-ai",
-  "version": "0.1.0",
+  "name": "chess-ai-app",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.2.0",
-    "@testing-library/user-event": "^13.5.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "chess.js": "^1.0.0",
+    "react": "^18.0.0",
+    "react-chessboard": "^2.0.0",
+    "react-dom": "^18.0.0",
+    "react-scripts": "^5.0.1",
+    "stockfish": "^10.0.0"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
   },
   "browserslist": {
     "production": [
@@ -35,5 +27,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "react-app-singlehtml": "^1.1.0"
   }
 }
