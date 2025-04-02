@@ -1,19 +1,31 @@
 
-
 import React, { useState, useEffect, useRef } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 
-
 function App() {
-  const [game, setGame] = useState(new Chess());
-  const [fen, setFen] = useState("start");
+  // Initialize the game: if a saved FEN exists, load it; otherwise start new
+  const savedFen = localStorage.getItem("gameFen") || "start";
+  const initialGame = new Chess();
+  if (savedFen !== "start") {
+    // Try to load the saved FEN. If it fails, fallback to the default starting position.
+    initialGame.load(savedFen);
+  }
+  
+  const [game, setGame] = useState(initialGame);
+  const [fen, setFen] = useState(game.fen());
   const [error, setError] = useState("");
+  const [aiDepth, setAiDepth] = useState(15);
   const stockfishRef = useRef(null);
+
+  // Save FEN to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("gameFen", fen);
+  }, [fen]);
 
   useEffect(() => {
     try {
-      stockfishRef.current = new Worker('stockfish.js');
+      stockfishRef.current = new Worker(`${process.env.PUBLIC_URL}/stockfish.js`);
       stockfishRef.current.onmessage = (event) => {
         try {
           const line = event.data ? event.data : event;
@@ -27,7 +39,6 @@ function App() {
               if (move) {
                 setFen(game.fen());
               } else {
-                // Αν για κάποιο λόγο η κίνηση του AI είναι άκυρη
                 setError("Η κίνηση του AI ήταν άκυρη.");
               }
             }
@@ -76,11 +87,15 @@ function App() {
   const makeAIMove = () => {
     try {
       stockfishRef.current.postMessage("position fen " + game.fen());
-      stockfishRef.current.postMessage("go depth 15");
+      stockfishRef.current.postMessage("go depth " + aiDepth);
     } catch (aiError) {
       console.error("Σφάλμα κατά την επικοινωνία με το AI:", aiError);
       setError("Παρουσιάστηκε σφάλμα στην επικοινωνία με το AI.");
     }
+  };
+
+  const handleAiDepthChange = (e) => {
+    setAiDepth(e.target.value);
   };
 
   return (
@@ -90,6 +105,18 @@ function App() {
           {error}
         </div>
       )}
+      <div style={{ marginBottom: "20px", textAlign: "center" }}>
+        <label htmlFor="aiDepth">Βαθμός Δυσκολίας:  {aiDepth}</label>
+        <br />
+        <input
+          id="aiDepth"
+          type="range"
+          min="5"
+          max="20"
+          value={aiDepth}
+          onChange={handleAiDepthChange}
+        />
+      </div>
       <Chessboard position={fen} onPieceDrop={onDrop} boardWidth={500} />
     </div>
   );
