@@ -1,24 +1,33 @@
 
+
+
+
 import React, { useState, useEffect, useRef } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 
+
 function App() {
-  // Initialize the game: if a saved FEN exists, load it; otherwise start new
+  // Check if there's a saved game in localStorage or start a new one
   const savedFen = localStorage.getItem("gameFen") || "start";
   const initialGame = new Chess();
   if (savedFen !== "start") {
-    // Try to load the saved FEN. If it fails, fallback to the default starting position.
     initialGame.load(savedFen);
   }
   
   const [game, setGame] = useState(initialGame);
   const [fen, setFen] = useState(game.fen());
   const [error, setError] = useState("");
-  const [aiDepth, setAiDepth] = useState(15);
+  const [status, setStatus] = useState("");
+  // Initial AI depth set to 5
+  const [aiDepth, setAiDepth] = useState(5);
+  // New state variables to track latest moves
+  const [lastMoveWhite, setLastMoveWhite] = useState("");
+  const [lastMoveBlack, setLastMoveBlack] = useState("");
+  
   const stockfishRef = useRef(null);
 
-  // Save FEN to localStorage whenever it changes
+  // Persist game state in localStorage
   useEffect(() => {
     localStorage.setItem("gameFen", fen);
   }, [fen]);
@@ -38,6 +47,11 @@ function App() {
               const move = game.move({ from, to, promotion: "q" });
               if (move) {
                 setFen(game.fen());
+                setLastMoveBlack(move.san);
+                // Check for checkmate after AI move
+                /*if (game.in_checkmate()) {
+                  setStatus("Checkmate! You lose.");
+                }*/
               } else {
                 setError("Η κίνηση του AI ήταν άκυρη.");
               }
@@ -72,7 +86,15 @@ function App() {
         return false;
       }
       setFen(game.fen());
+      setLastMoveWhite(move.san);
       setError("");
+      // Check if player's move resulted in checkmate
+      /*if (game.in_checkmate()) {
+        setStatus("Checkmate! You win.");
+        return true;
+      }*/
+      // Clear any previous status message if game is still active
+      setStatus("");
       setTimeout(() => {
         makeAIMove();
       }, 500);
@@ -98,6 +120,18 @@ function App() {
     setAiDepth(e.target.value);
   };
 
+  // Function to start a new game
+  const handleNewGame = () => {
+    const newGame = new Chess();
+    setGame(newGame);
+    setFen(newGame.fen());
+    setError("");
+    setStatus("");
+    setLastMoveWhite("");
+    setLastMoveBlack("");
+    localStorage.removeItem("gameFen");
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "20px" }}>
       {error && (
@@ -105,8 +139,18 @@ function App() {
           {error}
         </div>
       )}
+      {status && (
+        <div style={{ color: "green", marginBottom: "10px", fontSize: "18px" }}>
+          {status}
+        </div>
+      )}
+      <div style={{ marginBottom: "10px", textAlign: "center" }}>
+        <div><strong>Τελευταία Κίνηση Χάρη:</strong> {lastMoveWhite || "-"}</div>
+        <div><strong>Τελευταία Κίνηση ΑΙ:</strong> {lastMoveBlack || "-"}</div>
+      </div>
       <div style={{ marginBottom: "20px", textAlign: "center" }}>
-        <label htmlFor="aiDepth">Βαθμός Δυσκολίας:  {aiDepth}</label>
+        <h1>Χάρης εναντίον ΑΙ</h1>
+        <label htmlFor="aiDepth">Βάθος Αναζήτησης ΑΙ: {aiDepth} Βήματο</label>
         <br />
         <input
           id="aiDepth"
@@ -117,7 +161,13 @@ function App() {
           onChange={handleAiDepthChange}
         />
       </div>
-      <Chessboard position={fen} onPieceDrop={onDrop} boardWidth={500} />
+      <Chessboard position={fen} onPieceDrop={onDrop} boardWidth={300} />
+      <div>
+        <br />
+      </div>
+      <button onClick={handleNewGame} style={{ marginBottom: "20px", padding: "8px 16px", fontSize: "16px" }}>
+        Νέο Παιχνίδι
+      </button>
     </div>
   );
 }
