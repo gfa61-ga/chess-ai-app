@@ -5,6 +5,7 @@ const urlsToCache = [
   "/",
   "/index.html",
   "/stockfish.js",
+  "/service-worker.js",
   // Add other assets you want to cache (e.g., CSS, images)
 ];
 
