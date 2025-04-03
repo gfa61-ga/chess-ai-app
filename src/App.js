@@ -6,6 +6,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 
+// A helper function to update localStorage for both fen and move history
+const updateLocalStorage = (game) => {
+  localStorage.setItem("gameFen", game.fen());
+  localStorage.setItem("gameHistory", JSON.stringify(game.history()));
+};
+
 function CoordinatesOverlay({ boardWidth }) {
   const squareSize = boardWidth / 8;
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -53,12 +59,18 @@ function CoordinatesOverlay({ boardWidth }) {
 
 
 function App() {
-  // Check if there's a saved game in localStorage or start a new one
-  const savedFen = localStorage.getItem("gameFen") || "start";
-  const initialGame = new Chess();
-  const boardWidth = 300;
-  if (savedFen !== "start") {
-    initialGame.load(savedFen);
+  // Create a new game instance
+  const newGameInstance = () => new Chess();
+  const boardWidth = 300; // Board width in pixels
+
+  // Restore game from localStorage if available
+  const savedHistory = JSON.parse(localStorage.getItem("gameHistory"));
+  const initialGame = newGameInstance();
+  if (savedHistory && Array.isArray(savedHistory)) {
+    // Replay moves from history to restore state
+    savedHistory.forEach((move) => {
+      initialGame.move(move);
+    });
   }
   
   const [game, setGame] = useState(initialGame);
@@ -78,6 +90,21 @@ function App() {
     localStorage.setItem("gameFen", fen);
   }, [fen]);
 
+  // Update displayed last moves based on game history.
+  useEffect(() => {
+    const hist = game.history({ verbose: true });
+    if (hist.length > 0) {
+      const whiteMoves = hist.filter((m) => m.color === "w");
+      const blackMoves = hist.filter((m) => m.color === "b");
+      setLastMoveWhite(whiteMoves.length > 0 ? whiteMoves[whiteMoves.length - 1].san : "");
+      setLastMoveBlack(blackMoves.length > 0 ? blackMoves[blackMoves.length - 1].san : "");
+    } else {
+      setLastMoveWhite("");
+      setLastMoveBlack("");
+    }
+  }, [fen, game]);
+
+
   useEffect(() => {
     try {
       stockfishRef.current = new Worker(`${process.env.PUBLIC_URL}/stockfish.js`);
@@ -93,11 +120,12 @@ function App() {
               const move = game.move({ from, to, promotion: "q" });
               if (move) {
                 setFen(game.fen());
+                // Stockfish move is black's move.
                 setLastMoveBlack(move.san);
-                // Check for checkmate after AI move
-                /*if (game.in_checkmate()) {
-                  setStatus("Checkmate! You lose.");
-                }*/
+                updateLocalStorage(game);
+                //if (game.in_checkmate()) {
+                //  setStatus("Checkmate! Χάρη έχασες.");
+                //}
               } else {
                 setError("Η κίνηση του AI ήταν άκυρη.");
               }
@@ -141,11 +169,11 @@ function App() {
       setFen(game.fen());
       setLastMoveWhite(move.san);
       setError("");
-      // Check if player's move resulted in checkmate
-      /*if (game.in_checkmate()) {
-        setStatus("Checkmate! You win.");
-        return true;
-      }*/
+      updateLocalStorage(game);
+      //if (game.in_checkmate()) {
+      //  setStatus("Checkmate! Χάρη κέρδισες.");
+      //  return true;
+      //}
       // Clear any previous status message if game is still active
       setStatus("");
       setTimeout(() => {
@@ -187,6 +215,7 @@ function App() {
       game.undo();
     }
     setFen(game.fen());
+    updateLocalStorage(game);
     // Update last moves from new history
     const newHistory = game.history({ verbose: true });
     let newLastMoveWhite = "";
@@ -210,6 +239,7 @@ function App() {
     setLastMoveWhite("");
     setLastMoveBlack("");
     localStorage.removeItem("gameFen");
+    localStorage.removeItem("gameHistory");
   };
 
   return (
