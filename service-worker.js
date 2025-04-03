@@ -1,50 +1,43 @@
-// public/service-worker.js
-
 const CACHE_NAME = "chess-ai-cache-v1";
 const urlsToCache = [
   "/",
   "/index.html",
   "/stockfish.js",
-  "/service-worker.js",
-  // Add other assets you want to cache (e.g., CSS, images)
+  // Add any other assets you want to cache
 ];
 
+// Install event: cache key assets
 self.addEventListener("install", (event) => {
-  // Perform install steps: open a cache and add specified assets
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log("Opened cache");
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log("Opened cache");
+      return cache.addAll(urlsToCache);
+    })
   );
 });
 
+// Activate event: clean up old caches
 self.addEventListener("activate", (event) => {
-  // Optionally clear out old caches
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
             console.log("Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           }
         })
-      );
-    })
+      )
+    )
   );
 });
 
+// Fetch event: serve from cache when available
 self.addEventListener("fetch", (event) => {
-  // Respond with cached assets when available, otherwise perform network fetch
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
+    caches.match(event.request).then((response) => {
+      // Return cached response if found, otherwise fetch from network
+      return response || fetch(event.request);
+    })
   );
 });
