@@ -1,8 +1,8 @@
 const CACHE_NAME = "chess-ai-cache-v1";
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/stockfish.js",
+  "./",
+  "./index.html",
+  "./stockfish.js",
   // Add any other assets you want to cache
 ];
 
