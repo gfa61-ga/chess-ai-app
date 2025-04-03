@@ -123,9 +123,9 @@ function App() {
                 // Stockfish move is black's move.
                 setLastMoveBlack(move.san);
                 updateLocalStorage(game);
-                //if (game.in_checkmate()) {
-                //  setStatus("Checkmate! Χάρη έχασες.");
-                //}
+                if (game.isCheckmate()) {
+                  setStatus("Checkmate! Χάρη έχασες.");
+                }
               } else {
                 setError("Η κίνηση του AI ήταν άκυρη.");
               }
@@ -170,10 +170,10 @@ function App() {
       setLastMoveWhite(move.san);
       setError("");
       updateLocalStorage(game);
-      //if (game.in_checkmate()) {
-      //  setStatus("Checkmate! Χάρη κέρδισες.");
-      //  return true;
-      //}
+      if (game.isCheckmate()) {
+        setStatus("Checkmate! Χάρη κέρδισες.");
+        return true;
+      }
       // Clear any previous status message if game is still active
       setStatus("");
       setTimeout(() => {
@@ -182,7 +182,7 @@ function App() {
       return true;
     } catch (moveError) {
       console.error("Σφάλμα κατά την εκτέλεση της κίνησης:", moveError);
-      setError("Παρουσιάστηκε σφάλμα κατά την εκτέλεση της κίνησης.");
+      //setError("Παρουσιάστηκε σφάλμα κατά την εκτέλεση της κίνησης.");
       return false;
     }
   };
