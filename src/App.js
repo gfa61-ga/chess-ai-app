@@ -77,11 +77,12 @@ function App() {
   const [fen, setFen] = useState(game.fen());
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
-  // Initial AI depth set to 5
-  const [aiDepth, setAiDepth] = useState(5);
+  // Initial AI depth set to 1
+  const [aiDepth, setAiDepth] = useState(1);
   // New state variables to track latest moves
   const [lastMoveWhite, setLastMoveWhite] = useState("");
   const [lastMoveBlack, setLastMoveBlack] = useState("");
+  const [isAiThinking, setIsAiThinking] = useState(false);
   
   const stockfishRef = useRef(null);
 
@@ -129,11 +130,14 @@ function App() {
               } else {
                 setError("Η κίνηση του AI ήταν άκυρη.");
               }
+              // AI move is complete, hide spinner.
+              setIsAiThinking(false);
             }
           }
         } catch (msgError) {
           console.error("Σφάλμα στην επεξεργασία μηνύματος Stockfish:", msgError);
           setError("Σφάλμα στην επικοινωνία με το Stockfish.");
+          setIsAiThinking(false);
         }
       };
     } catch (engineError) {
@@ -176,6 +180,8 @@ function App() {
       }
       // Clear any previous status message if game is still active
       setStatus("");
+      // Set spinner visible and let the AI respond after a delay.
+      setIsAiThinking(true);
       setTimeout(() => {
         makeAIMove();
       }, 500);
@@ -194,6 +200,7 @@ function App() {
     } catch (aiError) {
       console.error("Σφάλμα κατά την επικοινωνία με το AI:", aiError);
       setError("Παρουσιάστηκε σφάλμα στην επικοινωνία με το AI.");
+      setIsAiThinking(false);
     }
   };
 
@@ -227,6 +234,7 @@ function App() {
     setLastMoveWhite(newLastMoveWhite);
     setLastMoveBlack(newLastMoveBlack);
     setStatus("");
+    setIsAiThinking(false);
   };
 
   // Function to start a new game
@@ -240,6 +248,7 @@ function App() {
     setLastMoveBlack("");
     localStorage.removeItem("gameFen");
     localStorage.removeItem("gameHistory");
+    setIsAiThinking(false);
   };
 
   return (
@@ -264,18 +273,38 @@ function App() {
         <input
           id="aiDepth"
           type="range"
-          min="5"
-          max="20"
+          min="1"
+          max="30"
           value={aiDepth}
           onChange={handleAiDepthChange}
         />
       </div>
+
+      <div style={{ textAlign: "center", display: "flex"}}>
 
       <div  style={{ marginBottom: "10px", textAlign: "center" }}>
         <div>Τελευταία Κίνηση <strong> Χάρη: <span style={{ color: "#ff0000" }}> {lastMoveWhite || "-" } </span> </strong> </div>
         <div>Τελευταία .. Κίνηση .. <strong> ΑΙ: <span style={{ color: "#ff0000" }}> {lastMoveBlack || "-" } </span> </strong> </div>
       </div>
 
+      {/* Display AI spinner */}
+      {isAiThinking && (
+        <div style={{ marginBottom: "10px" }}>
+          <div
+            style={{
+              border: "4px solid rgba(0, 0, 0, 0.1)",
+              width: "36px",
+              height: "36px",
+              borderRadius: "50%",
+              borderLeftColor: "black",
+              animation: "spin 1s linear infinite"
+            }}
+          ></div>
+        </div>
+      )}
+
+      </div>
+     
       <div style={{ position: "relative", width: boardWidth, height: boardWidth }}>
         <Chessboard position={fen} onPieceDrop={onDrop} boardWidth={boardWidth} />
         <CoordinatesOverlay boardWidth={boardWidth} />
