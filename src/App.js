@@ -78,7 +78,11 @@ function App() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   // Initial AI depth set to 1
-  const [aiDepth, setAiDepth] = useState(1);
+
+  const [aiDepth, setAiDepth] = useState(
+     localStorage.getItem("aiDepth") ? parseInt(localStorage.getItem("aiDepth"), 10) : 1
+  );
+
   // New state variables to track latest moves
   const [lastMoveWhite, setLastMoveWhite] = useState("");
   const [lastMoveBlack, setLastMoveBlack] = useState("");
@@ -90,6 +94,12 @@ function App() {
   useEffect(() => {
     localStorage.setItem("gameFen", fen);
   }, [fen]);
+
+
+  useEffect(() => {
+     localStorage.setItem("aiDepth", aiDepth);
+  }, [aiDepth]);
+
 
   // Update displayed last moves based on game history.
   useEffect(() => {
@@ -122,7 +132,7 @@ function App() {
               if (move) {
                 setFen(game.fen());
                 // Stockfish move is black's move.
-                setLastMoveBlack(move.san);
+                setLastMoveBlack(move.san); // Save only after the AI move.
                 updateLocalStorage(game);
                 if (game.isCheckmate()) {
                   setStatus("Checkmate! Χάρη έχασες.");
@@ -136,7 +146,7 @@ function App() {
           }
         } catch (msgError) {
           console.error("Σφάλμα στην επεξεργασία μηνύματος Stockfish:", msgError);
-          setError("Σφάλμα στην επικοινωνία με το Stockfish.");
+          // setError("Σφάλμα στην επικοινωνία με το Stockfish.");
           setIsAiThinking(false);
         }
       };
@@ -173,7 +183,7 @@ function App() {
       setFen(game.fen());
       setLastMoveWhite(move.san);
       setError("");
-      updateLocalStorage(game);
+      // updateLocalStorage(game);
       if (game.isCheckmate()) {
         setStatus("Checkmate! Χάρη κέρδισες.");
         return true;
