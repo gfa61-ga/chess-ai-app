@@ -4,13 +4,13 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.3/workbox
 if (workbox) {
   console.log("Workbox is loaded");
 
-  const appVersion = "v1.0.0";
+  cconst appVersion = "v1.0.0"; // update this when your app version changes
 
   // Precache assets
   workbox.precaching.precacheAndRoute([
-    { url: `/?v=${appVersion}`, revision: null },
-    { url: `/index.html?v=${appVersion}`, revision: null },
-    { url: `/stockfish.js?v=${appVersion}`, revision: null }
+    { url: '/', revision: appVersion },
+    { url: '/index.html', revision: appVersion },
+    { url: '/stockfish.js', revision: appVersion }
   ]);
 
   // Cache JavaScript files with a CacheFirst strategy
