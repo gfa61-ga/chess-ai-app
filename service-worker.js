@@ -4,7 +4,7 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.3/workbox
 if (workbox) {
   console.log("Workbox is loaded");
 
-  const appVersion = "v1.0.2"; // update this when your app version changes
+  const appVersion = "v1.0.3"; // update this when your app version changes
 
   // Precache assets
   workbox.precaching.precacheAndRoute([
@@ -60,7 +60,8 @@ if (workbox) {
       cacheName: 'html-cache',
       plugins: [
         new workbox.expiration.ExpirationPlugin({
-          maxAgeSeconds: 24 * 60 * 60, // 1 day
+          //maxAgeSeconds: 24 * 60 * 60, // 1 day
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         }),
       ],
     })
