@@ -1,43 +1,70 @@
-const CACHE_NAME = "chess-ai-cache-v1";
-const urlsToCache = [
-  "./",
-  "./index.html",
-  "./stockfish.js",
-  // Add any other assets you want to cache
-];
+// Load Workbox from the CDN using importScripts
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.3/workbox-sw.js');
 
-// Install event: cache key assets
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log("Opened cache");
-      return cache.addAll(urlsToCache);
+if (workbox) {
+  console.log("Workbox is loaded");
+
+  const appVersion = "v1.0.2"; // update this when your app version changes
+
+  // Precache assets
+  workbox.precaching.precacheAndRoute([
+    { url: './', revision: appVersion },
+    { url: './index.html', revision: appVersion },
+    { url: './stockfish.js', revision: appVersion }
+  ]);
+
+  // Cache JavaScript files with a CacheFirst strategy
+  workbox.routing.registerRoute(
+    ({ request }) => request.destination === 'script',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'js-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        }),
+      ],
     })
   );
-});
 
-// Activate event: clean up old caches
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) =>
-      Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log("Deleting old cache:", cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      )
-    )
-  );
-});
-
-// Fetch event: serve from cache when available
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Return cached response if found, otherwise fetch from network
-      return response || fetch(event.request);
+  // Cache CSS files with a CacheFirst strategy
+  workbox.routing.registerRoute(
+    ({ request }) => request.destination === 'style',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'css-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        }),
+      ],
     })
   );
-});
+
+  // Cache images with a CacheFirst strategy
+  workbox.routing.registerRoute(
+    ({ request }) => request.destination === 'image',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'images-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 60,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        }),
+      ],
+    })
+  );
+
+  // Use NetworkFirst for navigations
+  workbox.routing.registerRoute(
+    ({ request }) => request.mode === 'navigate',
+    new workbox.strategies.NetworkFirst({
+      cacheName: 'html-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxAgeSeconds: 24 * 60 * 60, // 1 day
+        }),
+      ],
+    })
+  );
+} else {
+  console.error("Workbox didn't load");
+}
