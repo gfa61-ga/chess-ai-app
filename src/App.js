@@ -83,6 +83,12 @@ function App() {
      localStorage.getItem("aiDepth") ? parseInt(localStorage.getItem("aiDepth"), 10) : 1
   );
 
+  const [playWithoutStockfish, setPlayWithoutStockfish] = useState(() => {
+    const savedState = localStorage.getItem('playWithoutStockfish');
+    return savedState === 'true'; // Convert string back to boolean
+  });
+
+
   // New state variables to track latest moves
   const [lastMoveWhite, setLastMoveWhite] = useState("");
   const [lastMoveBlack, setLastMoveBlack] = useState("");
@@ -100,6 +106,19 @@ function App() {
      localStorage.setItem("aiDepth", aiDepth);
   }, [aiDepth]);
 
+  useEffect(() => {
+    localStorage.setItem('playWithoutStockfish', playWithoutStockfish.toString());
+  }, [playWithoutStockfish]);
+
+  useEffect(() => {
+    // When stockfish is enabled and it's black's turn, trigger an AI move
+    if (!playWithoutStockfish && game.turn() === "b") {
+      setIsAiThinking(true);
+      setTimeout(() => {
+        makeAIMove();
+      }, 500);
+    }
+  }, [playWithoutStockfish, game]);
 
   // Update displayed last moves based on game history.
   useEffect(() => {
@@ -135,7 +154,7 @@ function App() {
                 setLastMoveBlack(move.san); // Save only after the AI move.
                 updateLocalStorage(game);
                 if (game.isCheckmate()) {
-                  setStatus("Checkmate! Χάρη έχασες.");
+                  setStatus("Ρουά Ματ! Χάρη έχασες.");
                 }
               } else {
                 setError("Η κίνηση του AI ήταν άκυρη.");
@@ -183,18 +202,23 @@ function App() {
       setFen(game.fen());
       setLastMoveWhite(move.san);
       setError("");
-      // updateLocalStorage(game);
+      // When playing without Stockfish, update localStorage immediately.
+      if (playWithoutStockfish) {
+        updateLocalStorage(game);
+      }
       if (game.isCheckmate()) {
-        setStatus("Checkmate! Χάρη κέρδισες.");
+        setStatus("Ρουά Ματ! Χάρη κέρδισες.");
         return true;
       }
       // Clear any previous status message if game is still active
       setStatus("");
       // Set spinner visible and let the AI respond after a delay.
-      setIsAiThinking(true);
-      setTimeout(() => {
-        makeAIMove();
-      }, 500);
+      if (!playWithoutStockfish) {
+        setIsAiThinking(true);
+        setTimeout(() => {
+          makeAIMove();
+        }, 500);
+      }
       return true;
     } catch (moveError) {
       console.error("Σφάλμα κατά την εκτέλεση της κίνησης:", moveError);
@@ -269,36 +293,63 @@ function App() {
           {error}
         </div>
       )}
+
+      {!playWithoutStockfish && (
+        <div style={{ marginBottom: "1px", textAlign: "center" }}>
+          <h2>Χάρης εναντίον Α.Ι.</h2>
+        </div>
+      )}
+      <div style={{ marginBottom: "20px", textAlign: "center", color: "brown" }}>
+        <label> <strong>
+          <input
+            type="checkbox"
+            checked={playWithoutStockfish}
+            disabled={game.turn() === "b" && !playWithoutStockfish}
+            onChange={(e) => setPlayWithoutStockfish(e.target.checked)}
+          />
+          Παίξε με αντίπαλο άνθρωπο</strong>
+        </label>
+      </div>
+
+      {/* (Other components) */}
+      {playWithoutStockfish && (
+        <div style={{ marginBottom: "10px", fontSize: "16px", color: "blue", textAlign: "center", textDecoration: 'underline'  }}>
+          {game.turn() === "w" ? "Παίζει ο ΧΑΡΗΣ" : "Παίζουν τα ΜΑΥΡΑ"}
+        </div>
+      )}
+
+      {/* AI Depth Slider (only shown if Stockfish is on) */}
+      {!playWithoutStockfish && (
+        <div style={{ marginBottom: "10px", textAlign: "center" }}>
+          <label htmlFor="aiDepth">Βάθος Αναζήτησης ΑΙ:  <strong>{aiDepth}</strong>  Βήματα </label>
+          <br />
+          <input
+            id="aiDepth"
+            type="range"
+            min="1"
+            max="30"
+            value={aiDepth}
+            onChange={handleAiDepthChange}
+          />
+        </div>
+      )}
+      
       {status && (
-        <div style={{ color: "green", marginBottom: "10px", fontSize: "18px" }}>
+        <div style={{ color: "green", marginBottom: "10px", fontSize: "22px" }}>
           {status}
         </div>
       )}
-      <div style={{ marginBottom: "1px", textAlign: "center" }}>
-        <h1>Χάρης εναντίον ΑΙ</h1>
-      </div>
-      <div style={{ marginBottom: "10px", textAlign: "center" }}>
-        <label htmlFor="aiDepth">Βάθος Αναζήτησης ΑΙ:  <strong>{aiDepth}</strong>  Βήματα </label>
-        <br />
-        <input
-          id="aiDepth"
-          type="range"
-          min="1"
-          max="30"
-          value={aiDepth}
-          onChange={handleAiDepthChange}
-        />
-      </div>
+
 
       <div style={{ textAlign: "center", display: "flex"}}>
 
       <div  style={{ marginBottom: "10px", textAlign: "center" }}>
         <div>Τελευταία Κίνηση <strong> Χάρη: <span style={{ color: "#ff0000" }}> {lastMoveWhite || "-" } </span> </strong> </div>
-        <div>Τελευταία .. Κίνηση .. <strong> ΑΙ: <span style={{ color: "#ff0000" }}> {lastMoveBlack || "-" } </span> </strong> </div>
+        <div>Τελευταία Κίνηση <strong> Μαύρα: <span style={{ color: "#ff0000" }}> {lastMoveBlack || "-" } </span> </strong> </div>
       </div>
 
       {/* Display AI spinner */}
-      {isAiThinking && (
+      {!playWithoutStockfish && isAiThinking && (
         <div style={{ marginBottom: "10px" }}>
           <div
             style={{
@@ -326,11 +377,11 @@ function App() {
       </div>
       {/* Buttons */}
       <div style={{ marginBottom: "20px", textAlign: "center", marginTop: "5px"}}>
-        <button onClick={handleNewGame} style={{ padding: "8px 16px", fontSize: "16px", marginRight: "10px" }}>
-          Νέο Παιχνίδι
-        </button>
-        <button onClick={handleUndo} style={{ padding: "8px 16px", fontSize: "16px" }}>
+        <button onClick={handleUndo} style={{ padding: "16px", fontSize: "16px" }}>
           Ακυρωση τελευταίας κίνησης Χάρη
+        </button>
+        <button onClick={handleNewGame} style={{ padding: "16px", fontSize: "16px", marginRight: "10px" }}>
+          Νέο Παιχνίδι
         </button>
       </div>
     </div>
