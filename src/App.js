@@ -12,6 +12,7 @@ const updateLocalStorage = (game) => {
   localStorage.setItem("gameHistory", JSON.stringify(game.history()));
 };
 
+
 function CoordinatesOverlay({ boardWidth }) {
   const squareSize = boardWidth / 8;
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -82,6 +83,8 @@ function App() {
   const [aiDepth, setAiDepth] = useState(
      localStorage.getItem("aiDepth") ? parseInt(localStorage.getItem("aiDepth"), 10) : 1
   );
+  
+  const [selectedSquare, setSelectedSquare] = useState(null);
 
   const [playWithoutStockfish, setPlayWithoutStockfish] = useState(() => {
     const savedState = localStorage.getItem('playWithoutStockfish');
@@ -227,6 +230,64 @@ function App() {
     }
   };
 
+
+
+  // New onSquareClick handler to allow click-to-select then click-to-move.
+  const onSquareClick = (square) => {
+    // console.log("Square clicked:", square);
+    if (selectedSquare) {
+      // Get the allowed moves from the currently selected square.
+      const allowedMoves = game.moves({ square: selectedSquare, verbose: true });
+      // Check if the clicked square is among the allowed moves.
+      const moveIsAllowed = allowedMoves.some(m => m.to === square);
+      if (!moveIsAllowed) {
+        //setError("Move not allowed. Try again.");
+        setSelectedSquare(null);
+        return;
+      }
+    
+      // Attempt move from selectedSquare to clicked square.
+      const piece = game.get(selectedSquare);
+      let promotion;
+      if (piece && piece.type === "p" && (square[1] === "8" || square[1] === "1")) {
+        promotion = "q";
+      }
+      const move = game.move({
+        from: selectedSquare,
+        to: square,
+        promotion: promotion,
+      });
+      if (move === null) {
+        setError("Invalid move. Try again.");
+        setSelectedSquare(null);
+        return;
+      }
+      setFen(game.fen());
+      setLastMoveWhite(move.san);
+      setError("");
+      updateLocalStorage(game);
+      setSelectedSquare(null);
+      if (game.isCheckmate()) {
+        setStatus("Checkmate! You win.");
+        return;
+      }
+      setStatus("");
+      if (!playWithoutStockfish) {
+        setIsAiThinking(true);
+        setTimeout(() => {
+          makeAIMove();
+        }, 500);
+      }
+    } else {
+      // If no square selected, select the square if it has a piece and belongs to the player whose turn it is.
+      const piece = game.get(square);
+      if (piece && piece.color === game.turn()) {
+        setSelectedSquare(square);
+      }
+    }
+  };
+
+
   const makeAIMove = () => {
     try {
       stockfishRef.current.postMessage("position fen " + game.fen());
@@ -284,6 +345,13 @@ function App() {
     localStorage.removeItem("gameHistory");
     setIsAiThinking(false);
   };
+
+  // Define custom styles for the selected square
+  const customSquareStyles = selectedSquare ? {
+    [selectedSquare]: {
+      backgroundColor: "rgba(255, 0, 0, 0.5)" // highlight with semi-transparent red
+    }
+  } : {};
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "20px" }}>
@@ -367,7 +435,7 @@ function App() {
       </div>
      
       <div style={{ position: "relative", width: boardWidth, height: boardWidth }}>
-        <Chessboard position={fen} onPieceDrop={onDrop} boardWidth={boardWidth} />
+        <Chessboard position={fen} onPieceDrop={onDrop} customSquareStyles={customSquareStyles} onSquareClick={onSquareClick} boardWidth={boardWidth} />
         <CoordinatesOverlay boardWidth={boardWidth} />
       </div>
 
