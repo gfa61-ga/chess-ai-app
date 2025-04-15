@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/chess-ai-app/static/css/main.cd3f8ab4.css",
-    "main.js": "/chess-ai-app/static/js/main.2e02a076.js",
+    "main.js": "/chess-ai-app/static/js/main.09cf8ee9.js",
     "index.html": "/chess-ai-app/index.html",
     "main.cd3f8ab4.css.map": "/chess-ai-app/static/css/main.cd3f8ab4.css.map",
-    "main.2e02a076.js.map": "/chess-ai-app/static/js/main.2e02a076.js.map"
+    "main.09cf8ee9.js.map": "/chess-ai-app/static/js/main.09cf8ee9.js.map"
   },
   "entrypoints": [
     "static/css/main.cd3f8ab4.css",
-    "static/js/main.2e02a076.js"
+    "static/js/main.09cf8ee9.js"
   ]
 }
