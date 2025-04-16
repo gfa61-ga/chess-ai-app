@@ -354,103 +354,126 @@ function App() {
   } : {};
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "20px" }}>
+    <div
+    style={{
+      backgroundColor: "#314d69", // Eye-resting background color for the whole page
+      minHeight: "100vh",
+      padding: "30px",
+      display: "flex",
+      justifyContent: "top",
+      flexDirection: "column",
+      alignItems: "center"
+    }}
+    >
+      <div
+        style={{
+          backgroundColor: "white", // White background for your UI block
+          alignItems: "center",
+          flexDirection: "column",
+          display: "flex",  
+          borderRadius: "8px",      // Optional: round the corners
+          padding: "20px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)", // Optional: add a subtle shadow for separation
+          width: "100%",
+          maxWidth: boardWidth +50        // Optional: limit the width so it doesn’t stretch too far
+        }}
+      >
+        {error && (
+          <div style={{ color: "red", marginBottom: "10px" }}>
+            {error}
+          </div>
+        )}
 
-      {error && (
-        <div style={{ color: "red", marginBottom: "10px" }}>
-          {error}
+        {!playWithoutStockfish && (
+          <div style={{ marginBottom: "1px", textAlign: "center" }}>
+            <h2>Χάρης εναντίον Α.Ι.</h2>
+          </div>
+        )}
+        <div style={{ marginBottom: "20px", textAlign: "center", color: "brown" }}>
+          <label> <strong>
+            <input
+              type="checkbox"
+              checked={playWithoutStockfish}
+              disabled={game.turn() === "b" && !playWithoutStockfish}
+              onChange={(e) => setPlayWithoutStockfish(e.target.checked)}
+            />
+            Παίξε με αντίπαλο άνθρωπο</strong>
+          </label>
         </div>
-      )}
 
-      {!playWithoutStockfish && (
-        <div style={{ marginBottom: "1px", textAlign: "center" }}>
-          <h2>Χάρης εναντίον Α.Ι.</h2>
-        </div>
-      )}
-      <div style={{ marginBottom: "20px", textAlign: "center", color: "brown" }}>
-        <label> <strong>
-          <input
-            type="checkbox"
-            checked={playWithoutStockfish}
-            disabled={game.turn() === "b" && !playWithoutStockfish}
-            onChange={(e) => setPlayWithoutStockfish(e.target.checked)}
-          />
-          Παίξε με αντίπαλο άνθρωπο</strong>
-        </label>
-      </div>
+        {/* (Other components) */}
+        {playWithoutStockfish && (
+          <div style={{ marginBottom: "10px", fontSize: "16px", color: "blue", textAlign: "center", textDecoration: 'underline'  }}>
+            {game.turn() === "w" ? "Παίζει ο ΧΑΡΗΣ" : "Παίζουν τα ΜΑΥΡΑ"}
+          </div>
+        )}
 
-      {/* (Other components) */}
-      {playWithoutStockfish && (
-        <div style={{ marginBottom: "10px", fontSize: "16px", color: "blue", textAlign: "center", textDecoration: 'underline'  }}>
-          {game.turn() === "w" ? "Παίζει ο ΧΑΡΗΣ" : "Παίζουν τα ΜΑΥΡΑ"}
-        </div>
-      )}
+        {/* AI Depth Slider (only shown if Stockfish is on) */}
+        {!playWithoutStockfish && (
+          <div style={{ marginBottom: "10px", textAlign: "center" }}>
+            <label htmlFor="aiDepth">Βάθος Αναζήτησης ΑΙ:  <strong>{aiDepth}</strong>  Βήματα </label>
+            <br />
+            <input
+              id="aiDepth"
+              type="range"
+              min="1"
+              max="30"
+              value={aiDepth}
+              onChange={handleAiDepthChange}
+            />
+          </div>
+        )}
+        
+        {status && (
+          <div style={{ color: "green", marginBottom: "10px", fontSize: "22px" }}>
+            {status}
+          </div>
+        )}
 
-      {/* AI Depth Slider (only shown if Stockfish is on) */}
-      {!playWithoutStockfish && (
-        <div style={{ marginBottom: "10px", textAlign: "center" }}>
-          <label htmlFor="aiDepth">Βάθος Αναζήτησης ΑΙ:  <strong>{aiDepth}</strong>  Βήματα </label>
-          <br />
-          <input
-            id="aiDepth"
-            type="range"
-            min="1"
-            max="30"
-            value={aiDepth}
-            onChange={handleAiDepthChange}
-          />
+
+        <div style={{ textAlign: "center", display: "flex"}}>
+
+        <div  style={{ marginBottom: "10px", textAlign: "center" }}>
+          <div>Τελευταία Κίνηση <strong> Χάρη: <span style={{ color: "#ff0000" }}> {lastMoveWhite || "-" } </span> </strong> </div>
+          <div>Τελευταία Κίνηση <strong> Μαύρα: <span style={{ color: "#ff0000" }}> {lastMoveBlack || "-" } </span> </strong> </div>
         </div>
-      )}
+
+        {/* Display AI spinner */}
+        {!playWithoutStockfish && isAiThinking && (
+          <div style={{ marginBottom: "10px" }}>
+            <div
+              style={{
+                border: "4px solid rgba(0, 0, 0, 0.1)",
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                borderLeftColor: "black",
+                animation: "spin 1s linear infinite"
+              }}
+            ></div>
+          </div>
+        )}
+
+        </div>
       
-      {status && (
-        <div style={{ color: "green", marginBottom: "10px", fontSize: "22px" }}>
-          {status}
+        <div style={{ position: "relative", width: boardWidth, height: boardWidth }}>
+          <Chessboard position={fen} onPieceDrop={onDrop} customSquareStyles={customSquareStyles} onSquareClick={onSquareClick} boardWidth={boardWidth} />
+          <CoordinatesOverlay boardWidth={boardWidth} />
         </div>
-      )}
 
-
-      <div style={{ textAlign: "center", display: "flex"}}>
-
-      <div  style={{ marginBottom: "10px", textAlign: "center" }}>
-        <div>Τελευταία Κίνηση <strong> Χάρη: <span style={{ color: "#ff0000" }}> {lastMoveWhite || "-" } </span> </strong> </div>
-        <div>Τελευταία Κίνηση <strong> Μαύρα: <span style={{ color: "#ff0000" }}> {lastMoveBlack || "-" } </span> </strong> </div>
-      </div>
-
-      {/* Display AI spinner */}
-      {!playWithoutStockfish && isAiThinking && (
-        <div style={{ marginBottom: "10px" }}>
-          <div
-            style={{
-              border: "4px solid rgba(0, 0, 0, 0.1)",
-              width: "36px",
-              height: "36px",
-              borderRadius: "50%",
-              borderLeftColor: "black",
-              animation: "spin 1s linear infinite"
-            }}
-          ></div>
+      
+        <div>
+          <br />
         </div>
-      )}
-
-      </div>
-     
-      <div style={{ position: "relative", width: boardWidth, height: boardWidth }}>
-        <Chessboard position={fen} onPieceDrop={onDrop} customSquareStyles={customSquareStyles} onSquareClick={onSquareClick} boardWidth={boardWidth} />
-        <CoordinatesOverlay boardWidth={boardWidth} />
-      </div>
-
-    
-      <div>
-        <br />
-      </div>
-      {/* Buttons */}
-      <div style={{ marginBottom: "20px", textAlign: "center", marginTop: "5px"}}>
-        <button onClick={handleUndo} style={{ padding: "16px", fontSize: "16px" }}>
-          Ακυρωση τελευταίας κίνησης Χάρη
-        </button>
-        <button onClick={handleNewGame} style={{ padding: "16px", fontSize: "16px", marginRight: "10px" }}>
-          Νέο Παιχνίδι
-        </button>
+        {/* Buttons */}
+        <div style={{ marginBottom: "20px", textAlign: "center", marginTop: "5px"}}>
+          <button onClick={handleUndo} style={{ padding: "16px", fontSize: "16px" }}>
+            Ακυρωση τελευταίας κίνησης Χάρη
+          </button>
+          <button onClick={handleNewGame} style={{ padding: "16px", fontSize: "16px", marginRight: "10px" }}>
+            Νέο Παιχνίδι
+          </button>
+        </div>
       </div>
     </div>
   );
